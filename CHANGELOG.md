@@ -2,6 +2,43 @@
 
 All notable changes to the Business Transaction Manager project.
 
+## [2.1.0] - 2026-02-20
+
+### Added - QuickBooks Import
+- **Import from QuickBooks**: Import transactions from QuickBooks CSV exports
+- **Smart Type Detection**: Automatically determines income vs expense from QuickBooks transaction types
+- **Account Mapping**: Maps QuickBooks accounts to appropriate categories
+- **Date Format Support**: Handles multiple date formats (MM/DD/YYYY, YYYY-MM-DD, MM-DD-YYYY)
+- **Import Preview**: Review transactions before importing with full preview table
+- **Validation**: Validates data and shows clear error messages
+- **Tag Auto-Creation**: Automatically creates tags from customer/vendor names
+- **Batch Import**: Import multiple transactions at once
+- **Category Intelligence**: Smart mapping of QuickBooks accounts to categories
+
+### Technical Features
+- CSV parsing with proper quote and escape handling
+- Support for various QuickBooks export formats
+- Transaction validation and data cleaning
+- Preview modal with scrollable table
+- Import instructions and format documentation
+- Error handling with user-friendly messages
+
+### Documentation
+- Added IMPORT_GUIDE.md with comprehensive import instructions
+- Updated README.md with import feature
+- Updated CHANGELOG.md with new version
+
+### Files Modified
+- `index.html` - Added import button and modal
+- `styles.css` - Import modal and preview styling
+- `app.js` - Complete import functionality
+- `README.md` - Updated feature list
+
+### Files Created
+- `IMPORT_GUIDE.md` - Complete import documentation
+
+---
+
 ## [2.0.0] - 2026-02-20
 
 ### Added - Multi-Company Management

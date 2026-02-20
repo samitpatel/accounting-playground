@@ -839,6 +839,287 @@ function escapeCsvField(field) {
 }
 
 // ============================================================================
+// IMPORT FUNCTIONALITY
+// ============================================================================
+
+let importedTransactions = [];
+
+function parseCSV(text) {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+    const rows = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+        });
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+function parseCSVLine(line) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            values.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    values.push(current.trim());
+
+    return values;
+}
+
+function mapQuickBooksTransaction(row) {
+    // Try to find date field
+    const dateField = row.date || row['transaction date'] || row['txn date'] || '';
+    const date = parseQuickBooksDate(dateField);
+
+    if (!date) return null;
+
+    // Determine transaction type from QuickBooks type
+    const qbType = (row.type || row['transaction type'] || '').toLowerCase();
+    const amount = parseFloat(row.amount || row.total || row.debit || row.credit || '0');
+
+    if (amount === 0 || isNaN(amount)) return null;
+
+    const isIncome = ['invoice', 'deposit', 'payment', 'sales receipt', 'payment received', 'income'].some(t => qbType.includes(t));
+    const isExpense = ['bill', 'expense', 'check', 'credit card', 'purchase', 'vendor payment'].some(t => qbType.includes(t));
+
+    let type = 'expense'; // default
+    let finalAmount = Math.abs(amount);
+
+    if (isIncome) {
+        type = 'income';
+    } else if (isExpense) {
+        type = 'expense';
+    } else {
+        // Use amount sign if type is unclear
+        type = amount >= 0 ? 'income' : 'expense';
+    }
+
+    // Map account to category
+    const account = row.account || row['account name'] || row.category || '';
+    const category = mapAccountToCategory(account, type);
+
+    // Get description
+    const description = row.memo || row.description || row['memo/description'] || row.name || '';
+
+    // Extract tags from name or account
+    const tags = [];
+    const name = row.name || row.customer || row.vendor || '';
+    if (name) tags.push(name.toLowerCase().replace(/\s+/g, '-'));
+
+    return {
+        type: type,
+        amount: finalAmount,
+        category: category,
+        description: description,
+        tags: tags,
+        date: date
+    };
+}
+
+function parseQuickBooksDate(dateStr) {
+    if (!dateStr) return null;
+
+    // Try MM/DD/YYYY format (QuickBooks default)
+    let match = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (match) {
+        const month = match[1].padStart(2, '0');
+        const day = match[2].padStart(2, '0');
+        const year = match[3];
+        return `${year}-${month}-${day}`;
+    }
+
+    // Try YYYY-MM-DD format
+    match = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (match) {
+        const year = match[1];
+        const month = match[2].padStart(2, '0');
+        const day = match[3].padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Try MM-DD-YYYY format
+    match = dateStr.match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+    if (match) {
+        const month = match[1].padStart(2, '0');
+        const day = match[2].padStart(2, '0');
+        const year = match[3];
+        return `${year}-${month}-${day}`;
+    }
+
+    return null;
+}
+
+function mapAccountToCategory(account, type) {
+    const accountLower = account.toLowerCase();
+
+    if (type === 'income') {
+        if (accountLower.includes('sales') || accountLower.includes('revenue')) return 'Sales';
+        if (accountLower.includes('service')) return 'Services';
+        return 'Other Income';
+    } else {
+        if (accountLower.includes('rent') || accountLower.includes('lease')) return 'Rent';
+        if (accountLower.includes('utility') || accountLower.includes('utilities') || accountLower.includes('electric') || accountLower.includes('water') || accountLower.includes('internet')) return 'Utilities';
+        if (accountLower.includes('salary') || accountLower.includes('salaries') || accountLower.includes('payroll') || accountLower.includes('wage')) return 'Salaries';
+        if (accountLower.includes('marketing') || accountLower.includes('advertising') || accountLower.includes('ads')) return 'Marketing';
+        if (accountLower.includes('travel') || accountLower.includes('mileage') || accountLower.includes('trip')) return 'Travel';
+        if (accountLower.includes('office') || accountLower.includes('supplies') || accountLower.includes('stationery')) return 'Office Supplies';
+        if (accountLower.includes('equipment') || accountLower.includes('computer') || accountLower.includes('software') || accountLower.includes('hardware')) return 'Equipment';
+        return 'Other Expenses';
+    }
+}
+
+function handleImportClick() {
+    document.getElementById('csv-file-input').click();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const text = e.target.result;
+            const rows = parseCSV(text);
+
+            if (rows.length === 0) {
+                showImportError('No valid data found in CSV file.');
+                return;
+            }
+
+            // Parse and validate transactions
+            importedTransactions = [];
+            rows.forEach(row => {
+                const transaction = mapQuickBooksTransaction(row);
+                if (transaction) {
+                    importedTransactions.push(transaction);
+                }
+            });
+
+            if (importedTransactions.length === 0) {
+                showImportError('Could not parse any valid transactions from the file. Please check the format.');
+                return;
+            }
+
+            showImportPreview();
+        } catch (error) {
+            console.error('Import error:', error);
+            showImportError('Error reading file: ' + error.message);
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+function showImportError(message) {
+    const errorDiv = document.getElementById('import-error');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    document.getElementById('import-instructions').style.display = 'block';
+    document.getElementById('import-preview').style.display = 'none';
+    document.getElementById('import-confirm-btn').style.display = 'none';
+    openModal('import-modal');
+}
+
+function showImportPreview() {
+    document.getElementById('import-instructions').style.display = 'none';
+    document.getElementById('import-error').style.display = 'none';
+    document.getElementById('import-preview').style.display = 'block';
+    document.getElementById('import-confirm-btn').style.display = 'inline-block';
+
+    // Update summary
+    const incomeCount = importedTransactions.filter(t => t.type === 'income').length;
+    const expenseCount = importedTransactions.filter(t => t.type === 'expense').length;
+    document.getElementById('import-summary').textContent =
+        `Found ${importedTransactions.length} transactions: ${incomeCount} income, ${expenseCount} expenses. Review below and click Import to add to current company.`;
+
+    document.getElementById('import-count').textContent = importedTransactions.length;
+
+    // Render preview table (first 50 transactions)
+    const tbody = document.getElementById('import-preview-tbody');
+    tbody.innerHTML = importedTransactions.slice(0, 50).map(t => `
+        <tr>
+            <td>${formatDate(t.date)}</td>
+            <td><span class="type-badge ${t.type}">${t.type}</span></td>
+            <td>${t.category}</td>
+            <td>${t.description || '-'}</td>
+            <td class="amount-cell ${t.type}">${formatCurrency(t.amount)}</td>
+        </tr>
+    `).join('');
+
+    if (importedTransactions.length > 50) {
+        tbody.innerHTML += `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 1rem; color: var(--text-secondary);">
+                    ... and ${importedTransactions.length - 50} more transactions
+                </td>
+            </tr>
+        `;
+    }
+
+    openModal('import-modal');
+}
+
+function confirmImport() {
+    if (importedTransactions.length === 0) return;
+
+    // Import all transactions
+    importedTransactions.forEach(t => {
+        createTransaction(t);
+    });
+
+    // Refresh the view
+    state.transactions = loadTransactions();
+    applyFilters();
+    renderTransactionsTable();
+    renderDashboard();
+
+    // Close modal
+    closeModal('import-modal');
+
+    // Show success message
+    alert(`Successfully imported ${importedTransactions.length} transactions!`);
+
+    // Reset
+    importedTransactions = [];
+    document.getElementById('csv-file-input').value = '';
+}
+
+function cancelImport() {
+    importedTransactions = [];
+    document.getElementById('csv-file-input').value = '';
+    document.getElementById('import-instructions').style.display = 'block';
+    document.getElementById('import-preview').style.display = 'none';
+    document.getElementById('import-error').style.display = 'none';
+    closeModal('import-modal');
+}
+
+// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
@@ -987,6 +1268,13 @@ function initEventListeners() {
 
     // Export
     document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
+
+    // Import
+    document.getElementById('import-csv-btn').addEventListener('click', handleImportClick);
+    document.getElementById('csv-file-input').addEventListener('change', handleFileSelect);
+    document.getElementById('import-confirm-btn').addEventListener('click', confirmImport);
+    document.getElementById('import-cancel-btn').addEventListener('click', cancelImport);
+    document.getElementById('import-modal-close').addEventListener('click', cancelImport);
 
     // Dashboard date range
     document.getElementById('dashboard-date-range').addEventListener('change', renderDashboard);

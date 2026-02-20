@@ -24,6 +24,7 @@ A full-featured, single-page web application for managing business transactions 
 - **Categories & Tags**: Organize transactions with predefined categories and custom tags
 - **Dashboard**: Visual analytics with charts showing income vs expenses, category breakdowns, and spending trends
 - **Filtering & Search**: Filter transactions by type, category, date range, or search by keyword
+- **QuickBooks Import**: Import transactions from QuickBooks CSV exports
 - **Data Export**: Export transactions to CSV format for use in Excel or other tools
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
 - **Data Persistence**: All data saved locally in browser using localStorage
@@ -266,6 +267,8 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for complete step-by-step instructions.
 
 - **[README.md](README.md)** - This file (overview and features)
 - **[QUICK_START.md](QUICK_START.md)** - 5-minute getting started guide
+- **[IMPORT_GUIDE.md](IMPORT_GUIDE.md)** - QuickBooks import instructions
+- **[DATA_STORAGE.md](DATA_STORAGE.md)** - How and where data is stored
 - **[AUTHENTICATION.md](AUTHENTICATION.md)** - User authentication details
 - **[COMPANIES.md](COMPANIES.md)** - Multi-company management guide
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - GitHub Pages deployment guide

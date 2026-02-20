@@ -1,0 +1,19 @@
+Date,Type,Name,Memo,Account,Amount
+01/15/2026,Invoice,Acme Corporation,Website design project,Sales,5000.00
+01/18/2026,Expense,Office Depot,Office supplies - pens and paper,Supplies,250.50
+01/20/2026,Bill,Commercial Realty LLC,Office rent for January,Rent,1200.00
+01/22/2026,Deposit,First National Bank,Client payment received,Sales,3500.00
+01/25/2026,Check,City Electric Company,Monthly utility bill,Utilities,450.75
+01/28/2026,Invoice,Global Tech Inc,Consulting services,Service Revenue,2800.00
+02/01/2026,Bill,Commercial Realty LLC,Office rent for February,Rent,1200.00
+02/03/2026,Expense,Staples,Printer ink and paper,Office Supplies,180.25
+02/05/2026,Check,John Smith,Staff salary payment,Salaries,2500.00
+02/08/2026,Invoice,Beta Solutions,Software development,Service Revenue,4200.00
+02/10/2026,Expense,Google Ads,Marketing campaign,Marketing,950.00
+02/12/2026,Check,Delta Airlines,Business trip to client,Travel,680.50
+02/15/2026,Deposit,First National Bank,Invoice payment,Sales,4200.00
+02/18/2026,Bill,Internet Provider Co,Monthly internet service,Utilities,120.00
+02/20/2026,Expense,Best Buy,New laptop for employee,Equipment,1800.00
+02/22/2026,Invoice,Omega Industries,Monthly retainer,Service Revenue,3000.00
+02/25/2026,Check,City Water,Water and sewer,Utilities,85.50
+02/28/2026,Expense,Amazon Business,Office supplies,Supplies,340.75

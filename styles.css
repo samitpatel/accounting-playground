@@ -684,6 +684,10 @@ body {
     max-width: 400px;
 }
 
+.modal-large {
+    max-width: 900px;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -775,6 +779,63 @@ body {
     background-color: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
+}
+
+/* Import Styles */
+.import-section {
+    margin-bottom: 1.5rem;
+}
+
+.import-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.import-section ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.import-section li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.import-section li strong {
+    color: var(--text-primary);
+}
+
+.import-preview-table {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.import-preview-table .transactions-table {
+    margin: 0;
+}
+
+.import-error {
+    padding: 1rem;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger-color);
+    border-radius: var(--border-radius);
+    color: var(--danger-color);
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+#import-summary {
+    padding: 0.75rem;
+    background-color: rgba(37, 99, 235, 0.1);
+    border-left: 3px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
 }
 
 /* Floating Action Button */
